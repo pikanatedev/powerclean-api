@@ -11,6 +11,7 @@ import {
 import type { Response } from 'express';
 import { DocumentsService } from './documents.service';
 import { GenerateReceiptDto } from './dto/generate-receipt.dto';
+import { RequirePermission } from '../common/decorators/require-permission.decorator';
 
 const XLSX_MIME =
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
@@ -27,6 +28,7 @@ function setDownload(res: Response, filename: string, buffer: Buffer) {
 export class DocumentsController {
   constructor(private readonly service: DocumentsService) {}
 
+  @RequirePermission('documents', 'view')
   @Post('receipt')
   async generateReceipt(
     @Body() dto: GenerateReceiptDto,
@@ -37,6 +39,7 @@ export class DocumentsController {
     return new StreamableFile(buffer);
   }
 
+  @RequirePermission('documents', 'view')
   @Get('tax-invoice/:id/xlsx')
   async generateTaxInvoice(
     @Param('id', ParseUUIDPipe) id: string,

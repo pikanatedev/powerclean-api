@@ -10,6 +10,8 @@ import { DocumentsModule } from './documents/documents.module';
 import { ProductsModule } from './products/products.module';
 import { TaxInvoicesModule } from './tax-invoices/tax-invoices.module';
 import { ReportsModule } from './reports/reports.module';
+import { PermissionsModule } from './permissions/permissions.module';
+import { PermissionsGuard } from './permissions/permissions.guard';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 
@@ -38,10 +40,12 @@ import { RolesGuard } from './auth/guards/roles.guard';
     ProductsModule,
     TaxInvoicesModule,
     ReportsModule,
+    PermissionsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: PermissionsGuard },
   ],
 })
 export class AppModule {}

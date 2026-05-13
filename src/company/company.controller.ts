@@ -1,19 +1,19 @@
 import { Body, Controller, Get, Put } from '@nestjs/common';
 import { CompanyService } from './company.service';
 import { UpdateCompanyDto } from './dto/update-company.dto';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { Role } from '../common/enums/role.enum';
+import { RequirePermission } from '../common/decorators/require-permission.decorator';
 
 @Controller('company')
 export class CompanyController {
   constructor(private readonly service: CompanyService) {}
 
+  @RequirePermission('company', 'view')
   @Get()
   get() {
     return this.service.get();
   }
 
-  @Roles(Role.ADMIN)
+  @RequirePermission('company', 'update')
   @Put()
   update(@Body() dto: UpdateCompanyDto) {
     return this.service.update(dto);

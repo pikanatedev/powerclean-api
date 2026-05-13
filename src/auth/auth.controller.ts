@@ -5,12 +5,15 @@ import { Public } from './decorators/public.decorator';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { AuthUser, CurrentUser } from './decorators/current-user.decorator';
 import { UsersService } from '../users/users.service';
+import { PermissionsService } from '../permissions/permissions.service';
+import { Role } from '../common/enums/role.enum';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly usersService: UsersService,
+    private readonly permissionsService: PermissionsService,
   ) {}
 
   @Public()
@@ -35,7 +38,11 @@ export class AuthController {
   }
 
   @Get('me')
-  me(@CurrentUser() user: AuthUser) {
-    return this.usersService.findById(user.id);
+  async me(@CurrentUser() user: AuthUser) {
+    const [profile, permissions] = await Promise.all([
+      this.usersService.findById(user.id),
+      this.permissionsService.getForRole(user.role as Role),
+    ]);
+    return { ...profile, permissions };
   }
 }

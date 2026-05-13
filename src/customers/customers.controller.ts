@@ -14,28 +14,31 @@ import { CustomersService } from './customers.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { ListCustomerDto } from './dto/list-customer.dto';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { Role } from '../common/enums/role.enum';
+import { RequirePermission } from '../common/decorators/require-permission.decorator';
 
 @Controller('customers')
 export class CustomersController {
   constructor(private readonly customersService: CustomersService) {}
 
+  @RequirePermission('customers', 'view')
   @Get()
   list(@Query() query: ListCustomerDto) {
     return this.customersService.list(query);
   }
 
+  @RequirePermission('customers', 'view')
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.customersService.findOne(id);
   }
 
+  @RequirePermission('customers', 'create')
   @Post()
   create(@Body() dto: CreateCustomerDto) {
     return this.customersService.create(dto);
   }
 
+  @RequirePermission('customers', 'update')
   @Patch(':id')
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -44,7 +47,7 @@ export class CustomersController {
     return this.customersService.update(id, dto);
   }
 
-  @Roles(Role.ADMIN)
+  @RequirePermission('customers', 'delete')
   @Delete(':id')
   @HttpCode(204)
   remove(@Param('id', ParseUUIDPipe) id: string) {
