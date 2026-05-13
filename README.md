@@ -1,92 +1,59 @@
 # CMS Backend
 
-NestJS + TypeORM + MySQL + JWT (access + refresh)
+ระบบจัดการข้อมูลและเอกสารการขาย สำหรับ **บริษัท เพาเวอร์ คลีน พลัส จำกัด**
 
-## Stack
-- NestJS 10
-- TypeORM + mysql2
-- Passport JWT (access + refresh strategy)
-- bcryptjs, class-validator
+ส่วนนี้คือ **ระบบหลังบ้าน (Backend)** ที่ทำหน้าที่เก็บข้อมูล ประมวลผล และสร้างเอกสาร
+ใช้งานผ่านส่วน [cms-frontend](../cms-frontend) ซึ่งเป็นหน้าเว็บ
 
-## โครงสร้าง
+---
+
+## ระบบนี้ทำอะไร
+
+ระบบนี้ช่วยให้ทีมงานทำงานเอกสารและการขายได้อย่างเป็นระบบ:
+
+- **เก็บข้อมูลลูกค้า** ทั้งหมดไว้ในที่เดียว ค้นหาและอัปเดตได้สะดวก
+- **จัดเก็บสินค้า** พร้อมราคา รหัสสินค้า สำหรับนำไปออกเอกสารต่อ
+- **ออกใบกำกับภาษี** ในรูปแบบไฟล์ Excel ตามรูปแบบมาตรฐานของบริษัท
+  - แต่ละใบมี 3 ฉบับในไฟล์เดียว: ต้นฉบับ (Original), สำเนา (Copy), สำเนาสำหรับบัญชี (Copy Acc)
+  - คำนวณภาษีมูลค่าเพิ่ม 7% และยอดรวมอัตโนมัติ
+  - แสดงจำนวนเงินเป็นตัวอักษรภาษาไทยอัตโนมัติ
+- **เก็บประวัติย้อนหลัง** — สามารถนำข้อมูลใบกำกับภาษีเก่าจาก Excel เข้าระบบทีเดียวได้
+- **รายงานยอดขาย** — สรุปยอดขายรวม จำนวนใบ ลูกค้าและสินค้ายอดนิยม โดยเลือกช่วงเวลาได้
+- **ตั้งค่าข้อมูลบริษัท** — ชื่อ ที่อยู่ เลขผู้เสียภาษี ผู้มีอำนาจลงนาม สำหรับแสดงในเอกสาร
+
+---
+
+## บัญชีผู้ใช้
+
+ระบบรองรับ 2 ระดับสิทธิ์:
+
+| สิทธิ์ | ทำอะไรได้ |
+|---|---|
+| **Admin** | จัดการได้ทั้งหมด รวมทั้งลบข้อมูลและแก้ไขข้อมูลบริษัท |
+| **Staff** | บันทึก/แก้ไขข้อมูลลูกค้า สินค้า ใบกำกับภาษี และดาวน์โหลดเอกสารได้ |
+
+---
+
+## ความปลอดภัย
+
+- เข้าสู่ระบบด้วยรหัสผ่านที่เข้ารหัส (bcrypt)
+- ใช้ระบบ token ที่หมดอายุอัตโนมัติ
+- แยกสิทธิ์การใช้งานชัดเจนระหว่าง admin และ staff
+- ข้อมูลถูกตรวจสอบความถูกต้องก่อนบันทึก
+
+---
+
+## ความสัมพันธ์กับส่วนอื่น
+
 ```
-src/
-  main.ts
-  app.module.ts
-  seed.ts                 # สร้าง admin/staff เริ่มต้น
-  auth/                   # login, refresh, logout, /me, guard, role
-  users/                  # User entity + service
-  customers/              # Customer CRUD
-  common/enums/role.enum.ts
-```
-
-## เริ่มใช้งาน
-
-### 1. สตาร์ท MySQL ด้วย Docker
-```bash
-docker compose up -d
-```
-- MySQL: `localhost:3306` (db: `cms_db`, user: `cms_user`, password: `cms_password`)
-- Adminer (GUI): http://localhost:8080
-
-### 2. ติดตั้ง dependencies
-```bash
-npm install
-```
-
-### 3. ตั้งค่า env
-```bash
-cp .env.example .env
-# แก้ JWT_ACCESS_SECRET / JWT_REFRESH_SECRET ให้เป็น string ยาวๆ
-```
-
-### 4. รัน dev server
-```bash
-npm run start:dev
-```
-API: `http://localhost:3001/api`
-
-ตอนแรก TypeORM จะ `synchronize: true` สร้างตารางให้อัตโนมัติ (เฉพาะ dev)
-
-### 5. seed user เริ่มต้น
-```bash
-npm run seed
-```
-จะได้บัญชี:
-- admin / admin1234 (role: admin)
-- staff / staff1234 (role: staff)
-
-## API Endpoints
-
-| Method | Path                | Auth      | Role           |
-|--------|---------------------|-----------|----------------|
-| POST   | /api/auth/login     | public    | -              |
-| POST   | /api/auth/refresh   | refresh   | -              |
-| POST   | /api/auth/logout    | access    | -              |
-| GET    | /api/auth/me        | access    | -              |
-| GET    | /api/customers      | access    | staff / admin  |
-| GET    | /api/customers/:id  | access    | staff / admin  |
-| POST   | /api/customers      | access    | staff / admin  |
-| PATCH  | /api/customers/:id  | access    | staff / admin  |
-| DELETE | /api/customers/:id  | access    | admin เท่านั้น |
-
-### ตัวอย่าง login
-```bash
-curl -X POST http://localhost:3001/api/auth/login \
-  -H 'Content-Type: application/json' \
-  -d '{"username":"admin","password":"admin1234"}'
+ผู้ใช้ ──► หน้าเว็บ (cms-frontend) ──► API (cms-backend นี้) ──► ฐานข้อมูล MySQL
+                                            │
+                                            └─► สร้างไฟล์ Excel จาก template
 ```
 
-ตอบกลับ:
-```json
-{
-  "accessToken": "...",
-  "refreshToken": "...",
-  "user": { "id": "...", "username": "admin", "role": "admin", "fullName": "..." }
-}
-```
+---
 
-## หมายเหตุเรื่อง production
-- `synchronize: true` ใช้ในช่วงพัฒนา เท่านั้น — production ให้ใช้ migration
-- เปลี่ยน JWT secret ใน `.env` ก่อน deploy
-- ใส่ HTTPS / reverse proxy หน้า API
+## เอกสารสำหรับ Developer
+
+ดูคู่มือติดตั้งและคำอธิบายทาง technical ได้ที่
+[`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)
