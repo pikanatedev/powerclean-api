@@ -1,0 +1,21 @@
+{
+  "name": "cms-backend-poc",
+  "version": "0.0.1",
+  "private": true,
+  "description": "POC: fill Excel template + convert to PDF via LibreOffice",
+  "scripts": {
+    "generate": "tsx generate.ts",
+    "generate:sample": "tsx generate.ts sample-data.json",
+    "docker:build": "docker build -t cms-libreoffice:latest -f docker/Dockerfile docker/"
+  },
+  "dependencies": {
+    "bahttext": "^1.0.0",
+    "exceljs": "^4.4.0",
+    "xlsx-populate": "^1.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}
